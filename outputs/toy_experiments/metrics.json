@@ -1,0 +1,78 @@
+{
+  "beta": 1.0,
+  "dropout_probabilities": [
+    0.0,
+    0.1,
+    0.2,
+    0.35,
+    0.5
+  ],
+  "experiment": "deterministic_toy_spectral_dropout",
+  "graph": {
+    "n_edges": 8,
+    "n_nodes": 7,
+    "relations": [
+      "associated_with",
+      "indication",
+      "participates_in",
+      "targets"
+    ]
+  },
+  "n_candidate_pairs": 4,
+  "n_feature_rows": 4,
+  "n_realizations": 16,
+  "n_robustness_rows": 20,
+  "protected_relations": [
+    "indication"
+  ],
+  "score_formula": "heat + 0.25 * resolvent - low_frequency_distance",
+  "seed": 20260523,
+  "top_nominal_pair": {
+    "nominal_score": -0.45518129001328655,
+    "pair_id": "drug_metformin__disease_diabetes",
+    "source": "drug:metformin",
+    "target": "disease:diabetes"
+  },
+  "top_robust_pair_by_dropout": {
+    "0.00": {
+      "mean_score": -0.45518129001328655,
+      "pair_id": "drug_metformin__disease_diabetes",
+      "robust_score": -0.45518129001328655,
+      "source": "drug:metformin",
+      "target": "disease:diabetes",
+      "variance": 0.0
+    },
+    "0.10": {
+      "mean_score": -0.40908227639204464,
+      "pair_id": "drug_metformin__disease_diabetes",
+      "robust_score": -0.4360402886161801,
+      "source": "drug:metformin",
+      "target": "disease:diabetes",
+      "variance": 0.026958012224135484
+    },
+    "0.20": {
+      "mean_score": -0.5202922730161542,
+      "pair_id": "drug_metformin__disease_diabetes",
+      "robust_score": -0.5463543837797225,
+      "source": "drug:metformin",
+      "target": "disease:diabetes",
+      "variance": 0.026062110763568187
+    },
+    "0.35": {
+      "mean_score": -0.31949934980472205,
+      "pair_id": "drug_metformin__disease_diabetes",
+      "robust_score": -0.4542562922470097,
+      "source": "drug:metformin",
+      "target": "disease:diabetes",
+      "variance": 0.13475694244228764
+    },
+    "0.50": {
+      "mean_score": -0.11222832971000765,
+      "pair_id": "drug_metformin__disease_diabetes",
+      "robust_score": -0.2670791177437406,
+      "source": "drug:metformin",
+      "target": "disease:diabetes",
+      "variance": 0.15485078803373292
+    }
+  }
+}

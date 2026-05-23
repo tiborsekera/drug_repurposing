@@ -1,0 +1,8 @@
+node_id,node_type
+drug:metformin,drug
+drug:imatinib,drug
+disease:diabetes,disease
+disease:leukemia,disease
+gene:AMPK,gene
+gene:BCR_ABL,gene
+pathway:glucose,pathway

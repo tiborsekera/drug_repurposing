@@ -1,0 +1,5 @@
+pair_id,source,target,source_type,target_type,is_known_indication,heat,resolvent,low_frequency_distance,source_degree,target_degree,nominal_score
+drug_imatinib__disease_diabetes,drug:imatinib,disease:diabetes,drug,disease,False,0.0,0.0,0.9135742037433482,2.0,2.7,-0.9135742037433482
+drug_imatinib__disease_leukemia,drug:imatinib,disease:leukemia,drug,disease,True,0.25895661328385666,0.5714285714285714,0.8707828967011578,2.0,2.0,-0.4689691405601583
+drug_metformin__disease_diabetes,drug:metformin,disease:diabetes,drug,disease,True,0.20655081899753208,1.1673819742489273,0.9535776025730505,2.0,2.7,-0.45518129001328655
+drug_metformin__disease_leukemia,drug:metformin,disease:leukemia,drug,disease,False,0.0,0.0,1.1866966493429012,2.0,2.0,-1.1866966493429012

@@ -1,0 +1,9 @@
+source,target,relation,weight
+drug:metformin,gene:AMPK,targets,1.0
+gene:AMPK,pathway:glucose,participates_in,0.8
+pathway:glucose,disease:diabetes,associated_with,1.0
+drug:imatinib,gene:BCR_ABL,targets,1.0
+gene:BCR_ABL,disease:leukemia,associated_with,1.0
+gene:AMPK,disease:diabetes,associated_with,0.7
+drug:metformin,disease:diabetes,indication,1.0
+drug:imatinib,disease:leukemia,indication,1.0

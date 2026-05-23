@@ -1,0 +1,6 @@
+{
+  "embedding_dimensions": 4,
+  "experiment_id": "EXP-002",
+  "lambda_shift": 2.5,
+  "tau": 1.0
+}

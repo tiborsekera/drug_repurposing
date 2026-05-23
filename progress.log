@@ -1,0 +1,73 @@
+2026-05-23 13:45 Europe/Budapest
+- Read initial_brainstorm_results.md and confirmed this is a greenfield project.
+- Checked repository contents: only initial_brainstorm_results.md exists.
+- Checked git status: directory is not currently a git repository.
+- Spawned two parallel subagents:
+  - Roadmap/docs worker owns docs/roadmap.md and docs/experiment_registry.md.
+  - Tests worker owns tests/test_graph_features.py and tests/test_perturbations.py.
+- Starting local scaffold for the first executable MVP: graph representation, sparse operators, spectral features, perturbations, robust score summaries, and a toy CLI.
+
+2026-05-23 13:52 Europe/Budapest
+- Added initial Python package scaffold under src/drug_repurposing.
+- Added pyproject.toml, README.md, graph representation, spectral feature helpers, perturbation helpers, and toy pipeline.
+- Received completed subagent outputs:
+  - docs/roadmap.md and docs/experiment_registry.md were created.
+  - tests/test_graph_features.py and tests/test_perturbations.py were created.
+- Tests assumed tuple-oriented public APIs, while local scaffold used object-oriented graph APIs.
+- Added src/drug_repurposing/graph_features.py as a tuple-oriented compatibility/convenience API.
+- Extended perturbations.edge_dropout to support both HeterogeneousGraph inputs and tuple edge-record lists.
+- Added summarize_score_robustness for tuple-edge pair robustness summaries.
+- Tried `python -m drug_repurposing.experiments.toy_pipeline`: failed because this environment has no `python` executable.
+- Tried `pytest -q`: failed because the pytest script cannot import the pytest module.
+- Tried `python3 -m pytest -q`: failed because pytest is not installed for python3.
+- Ran `python3 -m compileall -q src tests`: passed.
+
+2026-05-23 14:00 Europe/Budapest
+- Updated README commands to use python3 and PYTHONPATH for non-installed usage.
+- Tried `python3 -m pip install --user -e '.[dev]'`: failed due PEP 668 externally managed system Python.
+- Created local virtual environment `.venv` and installed the project editable with dev dependencies.
+- Ran `.venv/bin/python -m pytest -q`: passed, 4 tests.
+- Ran `.venv/bin/python -m drug_repurposing.experiments.toy_pipeline`: passed and emitted feature/robustness JSON for the metformin-diabetes toy pair.
+- Ran `.venv/bin/python -m compileall -q src tests`: passed.
+- Added .gitignore for virtualenv, caches, Python bytecode, and package build metadata.
+- Removed generated pytest/cache/egg-info artifacts after verification. Kept `.venv` for reproducible local test runs.
+- Closed both subagents after integrating their outputs.
+
+2026-05-23 14:10 Europe/Budapest
+- Started a serious end-to-end research sprint toward a Nature-grade manuscript attempt.
+- Spawned three parallel subagents:
+  - Literature/context worker owns docs/literature_context.md and docs/nature_grade_bar.md.
+  - Manuscript worker owns paper/manuscript.md and paper/figures_plan.md.
+  - Toy experiment runner worker owns scripts/run_toy_experiments.py and outputs/toy_experiments/README.md.
+- Verified current external source context via web:
+  - TxGNN Nature Medicine 2024 article.
+  - PrimeKG project page, GitHub repository, and Harvard Dataverse download route.
+  - DRKG GitHub repository.
+  - 2024 Briefings in Bioinformatics review on KG drug repurposing.
+- Added data.py with PrimeKG Dataverse download URL, PrimeKG CSV loader, PrimeKG-to-graph conversion, positive pair extraction, negative sampling, random pair split, and disease-held-out split.
+- Added baselines.py with spectral, degree-product, and common-neighbor baseline scores.
+- Added metrics.py with AUROC/AUPRC, Hits@K, and expected calibration error helpers.
+- Added tests/test_data_and_metrics.py for PrimeKG-like conversion, deterministic negative sampling/splitting, and metric helpers.
+- Ran `.venv/bin/python -m pytest -q`: passed, 7 tests.
+- Ran `.venv/bin/python -m compileall -q src tests`: passed.
+- Reviewed subagent-created docs/literature_context.md and docs/nature_grade_bar.md.
+- Added scripts/run_primekg_smoke_analysis.py to validate the public PrimeKG CSV ingestion route on a bounded row sample.
+- Added outputs/primekg_smoke/README.md documenting smoke-analysis artifacts.
+- Tried `.venv/bin/python scripts/run_primekg_smoke_analysis.py --nrows 50000`: failed with HTTP 403 from pandas/urllib against the Dataverse access endpoint.
+- Updated read_primekg_csv to use urllib Request with a project user-agent for HTTP(S) inputs.
+- Re-ran `.venv/bin/python scripts/run_primekg_smoke_analysis.py --nrows 50000`: passed. Output showed first 50,000 public PrimeKG rows are all gene/protein PPI, with zero drug-disease positive pairs; this means head-row smoke checks validate schema only and cannot support drug-disease claims.
+- Re-ran `.venv/bin/python -m pytest -q`: passed, 7 tests.
+- Reviewed subagent-created scripts/run_toy_experiments.py and outputs/toy_experiments/metrics.json.
+- Updated low_frequency_embedding to use deterministic dense eigendecomposition for graphs up to 256 nodes, avoiding global NumPy RNG seeding in toy experiments.
+- Removed toy runner's global RNG seeding workaround and let pair_features handle deterministic small-graph embeddings.
+- Ran `.venv/bin/python scripts/run_toy_experiments.py`: passed and regenerated outputs/toy_experiments.
+- Re-ran `.venv/bin/python -m pytest -q`: passed, 7 tests.
+- Reviewed manuscript and figures plan from the manuscript subagent.
+- Added scripts/materialize_toy_artifacts.py to create formal EXP-001 and EXP-002 artifact directories from the toy graph.
+- Added scripts/build_toy_figure_data.py to create figure-ready toy Laplacian spectrum and feature summary data.
+- Ran `.venv/bin/python scripts/materialize_toy_artifacts.py && .venv/bin/python scripts/build_toy_figure_data.py`: passed and created artifacts/EXP-001, artifacts/EXP-002, and figures/data.
+- Re-ran `.venv/bin/python -m pytest -q`: passed, 7 tests.
+- Updated paper/manuscript.md to distinguish completed toy artifacts and PrimeKG smoke results from unrun full-scale benchmark claims.
+- Updated paper/figures_plan.md status notes for completed toy figure-data artifacts and the limited PrimeKG smoke result.
+- Final verification for this work block: `.venv/bin/python -m pytest -q` passed, 7 tests.
+- Closed all three subagents after integrating outputs.

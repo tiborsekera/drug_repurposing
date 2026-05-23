@@ -1,0 +1,19 @@
+{
+  "edge_count": 50000,
+  "node_count": 14467,
+  "node_type_count": 1,
+  "nrows_requested": 50000,
+  "positive_drug_disease_pairs": 0,
+  "relation_count": 1,
+  "rows_read": 50000,
+  "source": "https://dataverse.harvard.edu/api/access/datafile/6180620",
+  "top_relations": {
+    "ppi": 50000
+  },
+  "top_x_types": {
+    "gene/protein": 50000
+  },
+  "top_y_types": {
+    "gene/protein": 50000
+  }
+}
