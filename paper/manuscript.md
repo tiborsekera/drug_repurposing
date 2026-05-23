@@ -12,7 +12,7 @@ The project is motivated by the hypothesis that confidence without perturbation 
 
 We define sparse graph operators over a heterogeneous biomedical knowledge graph and compute pair-level features for candidate drug-disease links. The implemented MVP includes a weighted adjacency matrix, the symmetric normalized Laplacian, heat-kernel scores, resolvent scores, low-frequency embedding distances, and simple degree covariates. A disorder ensemble then repeatedly perturbs the graph and summarizes each candidate score by its mean, variance, and variance-penalized robust score. At full scale, these quantities will be combined with network proximity, knowledge-graph embeddings, and optional heterogeneous GNN baselines under random, disease-held-out, drug-held-out, and disease-class-held-out splits.
 
-This manuscript skeleton is deliberately conservative. It does not report biological discoveries, benchmark improvements, or robustness effects that have not yet been observed. Instead, it specifies the analyses required to support or reject the central claim that spectral/transport descriptors and perturbation stability add measurable information beyond raw link-prediction scores.
+This manuscript skeleton is deliberately conservative. It does not report biological discoveries, benchmark improvements, or robustness effects that have not yet been observed. Instead, it specifies the analyses required to support or reject the central claim that disorder-response fingerprints identify structurally fragile drug-disease predictions that conventional link-prediction confidence misses.
 
 ## Results
 
@@ -61,6 +61,8 @@ TODO artifacts:
 
 The primary planned graph is PrimeKG. The manuscript should not make claims about drug repurposing until ingestion, graph statistics, and split leakage checks are reproducible. A bounded smoke analysis successfully read 50,000 rows from the public PrimeKG Dataverse access endpoint after adding a user-agent to the loader. The first 50,000 rows were all gene/protein PPI rows and contained zero extracted drug-disease positives, which confirms that head-row smoke tests validate schema and access only; drug-disease benchmarking requires either full-file ingestion or stratified relation-aware extraction. Four split types are planned: random edge split for sanity checking, disease-held-out split for zero-shot disease generalization, drug-held-out split for new-drug generalization, and disease-class-held-out split for the hardest out-of-distribution setting.
 
+Following internal review, leakage control is treated as a correctness blocker rather than a convenience. The implemented `SplitGraphBundle` now separates labelled pair tables from the `candidate_graph_for_scoring`. Held-out validation and test positive label edges are removed from this graph for direct and reciprocal orientations across indication, off-label-use, and contraindication relations. Machine-readable leakage reports check direct label-edge leakage, reciprocal leakage, train/validation/test pair overlap, held-out disease leakage, held-out drug leakage, and the current status of alias normalization. Alias normalization is not yet implemented, so no benchmark claim should be made until synonym and duplicate semantics are handled after entity normalization.
+
 Experiment IDs: `EXP-010`, `EXP-020`, `EXP-021`, `EXP-022`, `EXP-023`.
 
 Figure cross-reference: Figure 2 and Extended Data Figure 2 in [figures_plan.md](/home/tibor/code_repos/drug_repurposing/paper/figures_plan.md).
@@ -93,6 +95,8 @@ TODO artifacts:
 ### Result 5: Disorder sweeps test whether robust predictions degrade more slowly
 
 The distinct planned contribution is a disorder ensemble over graph perturbations. The perturbation families include edge dropout, relation dropout, weight noise, drug/disease neighborhood masking, degree-preserving rewiring, and biological-layer dropout. For each candidate pair and model, the analysis must store per-realization scores, not only aggregate metrics. The core test is whether stable predictions retain AUPRC or Hits@K under increasing perturbation strength and whether the degradation slope differs between baselines and disorder-aware reranking.
+
+The first implemented fingerprint summarizes score-realization tables with mean score, score variance, variance-penalized robust score, degradation slope, probability of remaining in the top-K candidates, and rank entropy. The full manuscript should extend this to relation-family deltas, biological-layer deltas, provenance sensitivity, and a degree-preserving rewiring null gap.
 
 Experiment IDs: `EXP-040`, `EXP-041`, `EXP-042`, `EXP-043`, `EXP-044`, `EXP-045`, `EXP-052`, `EXP-061`.
 
@@ -163,7 +167,7 @@ Planned perturbation extensions include neighborhood masking, degree-preserving 
 
 ### Splits and negative sampling
 
-The planned benchmark will use fixed split artifacts for random edge, disease-held-out, drug-held-out, and disease-class-held-out settings. Random edge splits are treated as a sanity check only. Out-of-distribution claims require disease-held-out, drug-held-out, or disease-class-held-out evaluation with leakage checks. Negative sampling will include degree-matched negatives and at least one alternate scheme because unlabeled drug-disease non-edges are not confirmed negatives.
+The planned benchmark will use fixed split artifacts for random edge, disease-held-out, drug-held-out, and disease-class-held-out settings. Random edge splits are treated as a sanity check only. Out-of-distribution claims require disease-held-out, drug-held-out, or disease-class-held-out evaluation with leakage checks. The current split bundle removes validation/test positive label edges from the graph used for scoring and emits leakage reports. Negative sampling will include degree-matched negatives and at least one alternate scheme because unlabeled drug-disease non-edges are not confirmed negatives.
 
 ### Models and evaluation
 

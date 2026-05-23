@@ -24,6 +24,20 @@ class PairSplit:
     split_id: str
 
 
+@dataclass(frozen=True)
+class SplitGraphBundle:
+    """Leakage-controlled graph and labelled pair artifacts for one split."""
+
+    split_id: str
+    train_graph: HeterogeneousGraph
+    candidate_graph_for_scoring: HeterogeneousGraph
+    train_pairs: pd.DataFrame
+    validation_pairs: pd.DataFrame
+    test_pairs: pd.DataFrame
+    removed_label_edges: pd.DataFrame
+    leakage_report: dict[str, object]
+
+
 def download_primekg(destination: str | Path) -> Path:
     """Download the ready-to-use PrimeKG CSV from Harvard Dataverse."""
 
@@ -99,6 +113,166 @@ def graph_to_pair_frame(
         elif source_type == disease_type and target_type == drug_type:
             rows.append({"drug_id": edge.target, "disease_id": edge.source, "label": 1})
     return pd.DataFrame(rows).drop_duplicates(ignore_index=True)
+
+
+def pair_keys(frame: pd.DataFrame) -> set[tuple[str, str]]:
+    """Return `(drug_id, disease_id)` keys from a labelled pair frame."""
+
+    if frame.empty:
+        return set()
+    return set(zip(frame["drug_id"].astype(str), frame["disease_id"].astype(str)))
+
+
+def positive_pair_keys(frame: pd.DataFrame) -> set[tuple[str, str]]:
+    """Return positive `(drug_id, disease_id)` keys from a labelled pair frame."""
+
+    if frame.empty:
+        return set()
+    positives = frame[frame["label"].astype(int) == 1]
+    return pair_keys(positives)
+
+
+def edge_matches_drug_disease_pair(
+    edge: Edge,
+    drug_id: str,
+    disease_id: str,
+    label_relations: set[str],
+) -> bool:
+    """Return whether an edge directly encodes a labelled drug-disease pair."""
+
+    if edge.relation not in label_relations:
+        return False
+    return (edge.source == drug_id and edge.target == disease_id) or (
+        edge.source == disease_id and edge.target == drug_id
+    )
+
+
+def remove_label_edges_for_pairs(
+    graph: HeterogeneousGraph,
+    held_out_pairs: pd.DataFrame,
+    label_relations: set[str] | None = None,
+) -> tuple[HeterogeneousGraph, pd.DataFrame]:
+    """Remove direct held-out label edges and reciprocal equivalents from a graph."""
+
+    label_relations = label_relations or {"indication", "off-label use", "contraindication"}
+    held_out_positive_pairs = positive_pair_keys(held_out_pairs)
+    kept_edges: list[Edge] = []
+    removed_rows: list[dict[str, object]] = []
+    for edge in graph.edges:
+        matched_pair = None
+        for drug_id, disease_id in held_out_positive_pairs:
+            if edge_matches_drug_disease_pair(edge, drug_id, disease_id, label_relations):
+                matched_pair = (drug_id, disease_id)
+                break
+        if matched_pair is None:
+            kept_edges.append(edge)
+        else:
+            removed_rows.append(
+                {
+                    "source": edge.source,
+                    "target": edge.target,
+                    "relation": edge.relation,
+                    "weight": edge.weight,
+                    "drug_id": matched_pair[0],
+                    "disease_id": matched_pair[1],
+                }
+            )
+
+    return graph.without_edges(kept_edges), pd.DataFrame(removed_rows)
+
+
+def leakage_report_for_split(
+    train_graph: HeterogeneousGraph,
+    train_pairs: pd.DataFrame,
+    validation_pairs: pd.DataFrame,
+    test_pairs: pd.DataFrame,
+    label_relations: set[str] | None = None,
+    held_out_diseases: set[str] | None = None,
+    held_out_drugs: set[str] | None = None,
+) -> dict[str, object]:
+    """Build machine-readable leakage checks for a split bundle."""
+
+    label_relations = label_relations or {"indication", "off-label use", "contraindication"}
+    held_out_positive_pairs = positive_pair_keys(pd.concat([validation_pairs, test_pairs], ignore_index=True))
+    leaked_direct_edges = []
+    for edge in train_graph.edges:
+        for drug_id, disease_id in held_out_positive_pairs:
+            if edge_matches_drug_disease_pair(edge, drug_id, disease_id, label_relations):
+                leaked_direct_edges.append(
+                    {
+                        "source": edge.source,
+                        "target": edge.target,
+                        "relation": edge.relation,
+                        "drug_id": drug_id,
+                        "disease_id": disease_id,
+                    }
+                )
+
+    train_keys = pair_keys(train_pairs)
+    validation_keys = pair_keys(validation_pairs)
+    test_keys = pair_keys(test_pairs)
+    pair_overlaps = {
+        "train_validation": sorted(train_keys & validation_keys),
+        "train_test": sorted(train_keys & test_keys),
+        "validation_test": sorted(validation_keys & test_keys),
+    }
+
+    train_positive = train_pairs[train_pairs["label"].astype(int) == 1] if not train_pairs.empty else train_pairs
+    held_out_diseases = held_out_diseases or set()
+    held_out_drugs = held_out_drugs or set()
+    held_out_disease_leaks = sorted(set(train_positive.get("disease_id", pd.Series(dtype=str))) & held_out_diseases)
+    held_out_drug_leaks = sorted(set(train_positive.get("drug_id", pd.Series(dtype=str))) & held_out_drugs)
+
+    return {
+        "direct_label_edges_absent": len(leaked_direct_edges) == 0,
+        "reciprocal_label_edges_absent": len(leaked_direct_edges) == 0,
+        "leaked_direct_edges": leaked_direct_edges,
+        "pair_overlap_zero": all(len(overlap) == 0 for overlap in pair_overlaps.values()),
+        "pair_overlaps": pair_overlaps,
+        "held_out_diseases_absent_from_train_positives": len(held_out_disease_leaks) == 0,
+        "held_out_disease_leaks": held_out_disease_leaks,
+        "held_out_drugs_absent_from_train_positives": len(held_out_drug_leaks) == 0,
+        "held_out_drug_leaks": held_out_drug_leaks,
+        "alias_normalization_required_before_claims": True,
+        "alias_normalization_status": "not_implemented",
+    }
+
+
+def build_split_graph_bundle(
+    graph: HeterogeneousGraph,
+    split: PairSplit,
+    label_relations: set[str] | None = None,
+    held_out_diseases: set[str] | None = None,
+    held_out_drugs: set[str] | None = None,
+) -> SplitGraphBundle:
+    """Construct a split bundle whose scoring graph excludes held-out labels."""
+
+    label_relations = label_relations or {"indication", "off-label use", "contraindication"}
+    held_out_pairs = pd.concat([split.validation, split.test], ignore_index=True)
+    train_graph, removed_label_edges = remove_label_edges_for_pairs(
+        graph,
+        held_out_pairs,
+        label_relations=label_relations,
+    )
+    leakage_report = leakage_report_for_split(
+        train_graph=train_graph,
+        train_pairs=split.train,
+        validation_pairs=split.validation,
+        test_pairs=split.test,
+        label_relations=label_relations,
+        held_out_diseases=held_out_diseases,
+        held_out_drugs=held_out_drugs,
+    )
+    return SplitGraphBundle(
+        split_id=split.split_id,
+        train_graph=train_graph,
+        candidate_graph_for_scoring=train_graph,
+        train_pairs=split.train.reset_index(drop=True),
+        validation_pairs=split.validation.reset_index(drop=True),
+        test_pairs=split.test.reset_index(drop=True),
+        removed_label_edges=removed_label_edges,
+        leakage_report=leakage_report,
+    )
 
 
 def sample_negative_pairs(
@@ -182,6 +356,7 @@ def disease_held_out_split(
     all_pairs = pd.concat([positives.assign(label=1), negatives.assign(label=0)], ignore_index=True)
     test = all_pairs[all_pairs["disease_id"].isin(held_out_diseases)].reset_index(drop=True)
     remaining = all_pairs[~all_pairs["disease_id"].isin(held_out_diseases)].reset_index(drop=True)
-    validation = remaining.sample(frac=validation_fraction, random_state=seed).reset_index(drop=True)
-    train = remaining.drop(validation.index).reset_index(drop=True)
+    validation_indices = remaining.sample(frac=validation_fraction, random_state=seed).index
+    validation = remaining.loc[validation_indices].reset_index(drop=True)
+    train = remaining.drop(index=validation_indices).reset_index(drop=True)
     return PairSplit(train=train, validation=validation, test=test, split_id="disease_held_out")

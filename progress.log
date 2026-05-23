@@ -71,3 +71,17 @@
 - Updated paper/figures_plan.md status notes for completed toy figure-data artifacts and the limited PrimeKG smoke result.
 - Final verification for this work block: `.venv/bin/python -m pytest -q` passed, 7 tests.
 - Closed all three subagents after integrating outputs.
+
+2026-05-23 14:35 Europe/Budapest
+- Incorporated colleague feedback prioritizing leakage control and the sharper novelty claim: perturbation stability as an independent validity signal.
+- Added SplitGraphBundle with train_graph, candidate_graph_for_scoring, train/validation/test pairs, removed_label_edges, and leakage_report.
+- Added label-edge removal for held-out validation/test positive pairs, including reciprocal drug-disease edge orientation and label relations indication/off-label use/contraindication.
+- Added machine-readable leakage reports for direct label-edge leakage, reciprocal leakage, pair overlap, held-out disease leakage, held-out drug leakage, and explicit alias-normalization status.
+- Fixed disease_held_out_split validation-index bug by sampling validation indices before reset_index and dropping those original indices.
+- Added tests for disease-held-out pair disjointness, held-out label-edge removal, leakage report fields, and proof that held-out direct label-edge weight cannot influence spectral features computed on candidate_graph_for_scoring.
+- Added disorder_response_fingerprint utilities for mean score, score variance, robust score, degradation slope, top-K persistence, and rank entropy from perturbation score realization tables.
+- Added tests for rank derivation and disorder fingerprint summaries.
+- Ran `.venv/bin/python -m pytest -q`: passed, 12 tests.
+- Ran `.venv/bin/python -m compileall -q src tests`: passed.
+- Added docs/feedback_response.md summarizing the revised claim, leakage safeguards, fingerprint features, and priority backlog.
+- Updated paper/manuscript.md and README.md to foreground leakage-safe split bundles and the disorder-response fingerprint claim.

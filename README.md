@@ -11,6 +11,15 @@ The first milestone is an executable MVP:
 4. perturb the graph with simple disorder models,
 5. summarize prediction stability as a robustness signal.
 
+The central research claim is not that spectral features alone improve drug
+repurposing. The claim to test is whether disorder-response fingerprints expose
+fragile high-confidence predictions after controlling for raw score and graph
+degree.
+
+Leakage control is mandatory: validation/test drug-disease label edges must be
+removed from the graph used for feature computation. The `SplitGraphBundle` API
+in `drug_repurposing.data` is the starting point for leakage-safe experiments.
+
 Run the toy pipeline:
 
 ```bash
